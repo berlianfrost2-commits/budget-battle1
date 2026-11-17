@@ -8,6 +8,9 @@ on:
 env:
   GODOT_VERSION: 4.3
 
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-22.04
@@ -55,5 +58,15 @@ jobs:
         with:
           name: BudgetBattle
           path: |
+            build/BudgetBattle.apk
+            build/BudgetBattle-release.zip
+
+      - name: 8. Rilis APK (link unduh langsung)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: BUDGET BATTLE v1.0.${{ github.run_number }}
+          make_latest: true
+          files: |
             build/BudgetBattle.apk
             build/BudgetBattle-release.zip
