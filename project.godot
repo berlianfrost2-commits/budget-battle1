@@ -6,9 +6,9 @@ config/name="BUDGET BATTLE"
 config/description="YOUR BUDGET, YOUR CREATIVITY, YOUR VICTORY."
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://icon.png"
 boot_splash/bg_color=Color(0.05, 0.07, 0.14, 1)
-boot_splash/image="res://icon.svg"
+boot_splash/image="res://icon.png"
 boot_splash/fullsize=false
 
 [autoload]

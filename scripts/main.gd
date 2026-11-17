@@ -82,7 +82,7 @@ func _go(builder: Callable) -> void:
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.modulate.a = 0.0
 	add_child(screen)
-	if toast_label:
+	if is_instance_valid(toast_label) and toast_label.get_parent() == self:
 		move_child(toast_label, -1)
 	builder.call()
 	create_tween().tween_property(screen, "modulate:a", 1.0, 0.25)
@@ -129,6 +129,8 @@ func _card(col: Color = CARD) -> PanelContainer:
 func _avatar(idx: int, name_text: String, sz: int = 84) -> Panel:
 	var p := Panel.new()
 	p.custom_minimum_size = Vector2(sz, sz)
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	p.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var c := Color("#0f172a") if idx == 99 else Color(AVATAR_COLORS[clampi(idx, 0, 11)])
 	p.add_theme_stylebox_override("panel", _box(c, sz / 2, Color.WHITE))
 	var l := _label("AI" if idx == 99 else name_text.substr(0, 1).to_upper(), int(sz * 0.42), Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
@@ -174,7 +176,7 @@ func _page(title: String, back: Callable = Callable(), scroll := true) -> VBoxCo
 	return v
 
 func toast(msg: String, col: Color = RED) -> void:
-	if toast_label:
+	if is_instance_valid(toast_label):
 		toast_label.queue_free()
 	toast_label = _label(msg, 24, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	toast_label.add_theme_stylebox_override("normal", _box(col, 18))
@@ -182,12 +184,10 @@ func toast(msg: String, col: Color = RED) -> void:
 	toast_label.position = Vector2(size.x * 0.08, size.y - 220)
 	toast_label.size = Vector2(size.x * 0.84, 0)
 	add_child(toast_label)
-	var l := toast_label
-	var tw := create_tween()
+	var tw := toast_label.create_tween()
 	tw.tween_interval(2.6)
-	tw.tween_property(l, "modulate:a", 0.0, 0.4)
-	tw.tween_callback(func():
-		if is_instance_valid(l): l.queue_free())
+	tw.tween_property(toast_label, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(toast_label.queue_free)
 
 func _loading(v: Control, text := "Memuat...") -> Label:
 	var l := _label(text, 26, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
@@ -205,7 +205,7 @@ func _splash() -> void:
 	v.add_theme_constant_override("separation", 20)
 	screen.add_child(v)
 	var logo := TextureRect.new()
-	logo.texture = load("res://icon.svg")
+	logo.texture = load("res://icon.png")
 	logo.custom_minimum_size = Vector2(240, 240)
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -508,6 +508,7 @@ func _game() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row1.add_child(title)
 	ui.timer = _label("--:--", 34, Color.WHITE)
+	ui.timer.autowrap_mode = TextServer.AUTOWRAP_OFF
 	row1.add_child(ui.timer)
 	ui.opp = _label("", 22, MUTED)
 	tv.add_child(ui.opp)
@@ -783,7 +784,12 @@ func _result() -> void:
 		c.add_child(cv)
 		var hh := HBoxContainer.new()
 		hh.add_child(_avatar(side[2], str(side[1]), 56))
-		hh.add_child(_label(str(side[1]), 22))
+		var nm := _label(str(side[1]), 22)
+		nm.autowrap_mode = TextServer.AUTOWRAP_OFF
+		nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		hh.add_child(nm)
 		cv.add_child(hh)
 		var mini := BuildCanvas.new()
 		mini.custom_minimum_size = Vector2(0, 220)

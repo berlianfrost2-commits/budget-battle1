@@ -162,8 +162,8 @@ func _draw_item(i: int, cs: float) -> void:
 	var t: float = anim.get(i, 1.0)
 	var s := ease(t, -2.0) * (0.75 + q / 400.0)
 	var base := cell_to_pos(Vector2i(int(e["x"]), int(e["y"])))
-	var height := cs * (0.35 + q / 250.0) * s
-	var half := cs * 0.42 * s
+	var height := cs * (0.5 + q / 200.0) * s
+	var half := cs * 0.5 * s
 	# bayangan
 	draw_circle(base + Vector2(0, cs * tilt * 0.25), half * 0.9, Color(0, 0, 0, 0.25))
 	match shape:
