@@ -17,7 +17,7 @@ export_presets.cfg       pengaturan export Android
 icon.svg                 ikon aplikasi
 scenes/Main.tscn         scene utama
 scripts/main.gd          semua layar (menu, gameplay, hasil, admin, dll.)
-scripts/build_canvas.gd  area bangun semi-3D (pasang, geser, warna, zoom, putar)
+scripts/build3d.gd       area bangun 3D (model 3D, cahaya, bayangan, kamera orbit)
 scripts/api.gd           koneksi ke server (login, data, pertandingan)
 scripts/config.gd        alamat server (diisi otomatis dari GitHub Secrets)
 supabase/schema.sql      database + logika server (match, bot, penilaian, ranking)
@@ -39,7 +39,7 @@ tools/generate_seed.py   pembuat seed.sql
 - Panel admin di dalam aplikasi: aktif/nonaktif kategori, ubah harga dan status objek, atur durasi, blokir pemain.
 
 ## Yang belum ada (jujur)
-- Visual masih **semi-3D 2.5D**, belum 3D penuh. Kodenya modular (`build_canvas.gd`), jadi bisa diganti 3D per kategori nanti.
+- Model 3D dibuat dari bentuk dasar 3D (kotak, tabung, bola, prisma) per jenis objek: sofa, kasur, mobil, pohon, lampu, gedung, dll. Belum model hasil desainer (file .glb).
 - Voting penonton, misi harian/mingguan, dan unggah model 3D dari dalam aplikasi belum dibuat. Untuk sementara, admin menambah objek dan gambar lewat Supabase Table Editor.
 - Fitur "Bagikan" menyalin teks hasil ke clipboard.
 

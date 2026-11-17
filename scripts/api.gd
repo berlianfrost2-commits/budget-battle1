@@ -7,6 +7,7 @@ var access_token: String = ""
 var refresh_token: String = ""
 var user_id: String = ""
 var profile: Dictionary = {}
+var last_email: String = ""
 
 func _ready() -> void:
 	_load_session()

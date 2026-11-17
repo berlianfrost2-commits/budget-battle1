@@ -1,7 +1,7 @@
 extends Control
 ## BUDGET BATTLE — semua layar game. Layar dibuat lewat kode agar mudah dikembangkan.
 
-const BuildCanvas := preload("res://scripts/build_canvas.gd")
+const BuildCanvas := preload("res://scripts/build3d.gd")
 
 const BG := Color("#0b1020")
 const CARD := Color("#16203a")
@@ -181,7 +181,7 @@ func toast(msg: String, col: Color = RED) -> void:
 	toast_label = _label(msg, 24, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	toast_label.add_theme_stylebox_override("normal", _box(col, 18))
 	toast_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	toast_label.position = Vector2(size.x * 0.08, size.y - 220)
+	toast_label.position = Vector2(size.x * 0.08, 120)
 	toast_label.size = Vector2(size.x * 0.84, 0)
 	add_child(toast_label)
 	var tw := toast_label.create_tween()
@@ -239,6 +239,7 @@ func _login(register := false) -> void:
 	if register:
 		v.add_child(user)
 	var email := LineEdit.new()
+	email.text = Api.last_email
 	email.placeholder_text = "Email"
 	email.custom_minimum_size.y = 84
 	email.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
@@ -248,27 +249,40 @@ func _login(register := false) -> void:
 	pw.secret = true
 	pw.custom_minimum_size.y = 84
 	v.add_child(pw)
+	var show := CheckBox.new()
+	show.text = "Tampilkan kata sandi"
+	show.add_theme_font_size_override("font_size", 24)
+	show.toggled.connect(func(on): pw.secret = not on)
+	v.add_child(show)
 	var go := _btn("DAFTAR" if register else "MASUK", func(): pass, GOLD)
 	v.add_child(go)
+	var err := _label("", 24, Color("#fca5a5"), HORIZONTAL_ALIGNMENT_CENTER)
+	v.add_child(err)
 	go.pressed.connect(func():
 		go.disabled = true
+		go.text = "Memproses..."
+		err.text = ""
 		var r: Dictionary
 		if register:
 			if user.text.strip_edges().length() < 3:
-				toast("Username minimal 3 huruf")
+				err.text = "Username minimal 3 huruf"
 				go.disabled = false
+				go.text = "DAFTAR"
 				return
-			r = await Api.sign_up(email.text.strip_edges(), pw.text, user.text.strip_edges())
+			Api.last_email = email.text.strip_edges().to_lower()
+			r = await Api.sign_up(Api.last_email, pw.text, user.text.strip_edges())
 			if r.ok and not Api.is_logged_in():
-				toast("Akun dibuat. Cek email untuk konfirmasi, lalu masuk.", GREEN)
 				go.disabled = false
-				_go(_login.bind(false))
+				go.text = "DAFTAR"
+				err.add_theme_color_override("font_color", Color("#86efac"))
+				err.text = "Akun dibuat! Buka email kamu, ketuk link konfirmasi (kalau muncul halaman error 'localhost', abaikan saja), lalu kembali ke sini dan MASUK."
 				return
 		else:
-			r = await Api.sign_in(email.text.strip_edges(), pw.text)
+			r = await Api.sign_in(email.text.strip_edges().to_lower(), pw.text)
 		if not r.ok:
-			toast(str(r.error))
+			err.text = str(r.error)
 			go.disabled = false
+			go.text = "DAFTAR" if register else "MASUK"
 			return
 		await Api.load_profile()
 		_go(_menu))
@@ -792,14 +806,14 @@ func _result() -> void:
 		hh.add_child(nm)
 		cv.add_child(hh)
 		var mini := BuildCanvas.new()
-		mini.custom_minimum_size = Vector2(0, 220)
+		mini.custom_minimum_size = Vector2(0, 300)
 		mini.editable = false
 		mini.items_by_id = items_by_id
 		mini.kind_color = Color(_cat_color())
 		mini.ground_color = Color(_cat_color()).darkened(0.7)
+		mini.stagger = true
+		mini.auto_spin = true
 		mini.set_build(side[3])
-		for i in (side[3] as Array).size():
-			mini.anim[i] = -0.1 * i
 		cv.add_child(mini)
 		var s: Dictionary = side[4] if side[4] is Dictionary else {}
 		cv.add_child(_label("TOTAL %d" % int(s.get("total", 0)), 34, GOLD, HORIZONTAL_ALIGNMENT_CENTER))
