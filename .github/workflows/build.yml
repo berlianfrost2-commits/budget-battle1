@@ -1,0 +1,59 @@
+name: Build APK & ZIP
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.3
+
+jobs:
+  android:
+    runs-on: ubuntu-22.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: 1. Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 2. Siapkan environment Godot + Android SDK
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/ ~/.config/
+          cp -r /root/.config/godot ~/.config/godot || true
+          cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable || true
+
+      - name: 3. Alamat server (opsional dari Secrets)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # opsional: kalau Secrets diisi, pakai server lain
+          if [ -n "$SUPABASE_URL" ]; then sed -i "s#const SUPABASE_URL := \".*\"#const SUPABASE_URL := \"${SUPABASE_URL}\"#" scripts/config.gd; fi
+          if [ -n "$SUPABASE_ANON_KEY" ]; then sed -i "s#const SUPABASE_ANON_KEY := \".*\"#const SUPABASE_ANON_KEY := \"${SUPABASE_ANON_KEY}\"#" scripts/config.gd; fi
+
+      - name: 4. Pemeriksaan kode (import + cek skrip)
+        run: |
+          godot --headless --verbose --import . 2>&1 | tee import.log || true
+          if grep -E "SCRIPT ERROR|Parse Error" import.log; then echo "Ada error di kode GDScript"; exit 1; fi
+
+      - name: 5. Build Android APK
+        run: |
+          mkdir -v -p build
+          godot --headless --verbose --export-debug "Android" build/BudgetBattle.apk
+          ls -la build
+
+      - name: 6. Buat ZIP (APK + source + database)
+        run: |
+          apt-get update -qq && apt-get install -y -qq zip >/dev/null || true
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          zip -r build/BudgetBattle-source.zip . -x "build/*" ".git/*" ".godot/*" "import.log"
+          cd build && zip BudgetBattle-release.zip BudgetBattle.apk BudgetBattle-source.zip
+
+      - name: 7. Upload hasil (APK & ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BudgetBattle
+          path: |
+            build/BudgetBattle.apk
+            build/BudgetBattle-release.zip
